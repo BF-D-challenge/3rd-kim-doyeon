@@ -54,8 +54,9 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
   }
 
   const style = THEME_STYLE[themeKey] ?? THEME_STYLE.birthday;
-  const cover = getCover(coverId);
-  const bg = cover ? cover.css : style.bg;
+  const isImageCover = Boolean(coverId && coverId.startsWith("http"));
+  const cover = isImageCover ? null : getCover(coverId);
+  const bg = isImageCover ? "#171717" : cover ? cover.css : style.bg;
   const fontText = `${title}${description}${style.chip}모디 · 초대가 곧 기대감이 되는 앱이름만 남기면 참석 완료`;
   const font = await loadKoreanFont(fontText);
 
@@ -75,6 +76,36 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
           padding: 80,
         }}
       >
+        {isImageCover && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coverId as string}
+            alt=""
+            width={1200}
+            height={630}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: 1200,
+              height: 630,
+              objectFit: "cover",
+            }}
+          />
+        )}
+        {isImageCover && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: 1200,
+              height: 630,
+              background: "rgba(0,0,0,0.4)",
+              display: "flex",
+            }}
+          />
+        )}
         <div
           style={{
             display: "flex",

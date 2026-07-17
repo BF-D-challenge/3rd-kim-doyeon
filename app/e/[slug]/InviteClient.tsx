@@ -170,6 +170,26 @@ export default function InviteClient({ event }: { event: EventRow }) {
               링크
             </Button>
           </div>
+
+          {/* 카톡 미리보기 (실제 OG 이미지) */}
+          <p className="mb-1.5 mt-4 text-xs text-muted-foreground">카톡에 붙이면 이렇게 보여요</p>
+          <div className="max-w-[260px] overflow-hidden rounded-xl border bg-background">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/e/${event.slug}/opengraph-image`}
+              alt="카톡 미리보기 카드"
+              className="aspect-[1200/630] w-full object-cover"
+            />
+            <div className="px-3 py-2">
+              <p className="truncate text-sm font-medium">{event.title}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {event.description ?? "이름만 남기면 참석 완료"}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground/70">
+                {pageUrl.replace(/^https?:\/\//, "")}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

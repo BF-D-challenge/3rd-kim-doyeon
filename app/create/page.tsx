@@ -10,10 +10,11 @@ import {
   Wand2,
   Loader2,
   Check,
+  ImagePlus,
 } from "lucide-react";
 import { themes, themeList, type ThemeKey } from "@/lib/themes";
 import { covers } from "@/lib/covers";
-import { stickerIcons, stickerIds, type Sticker } from "@/lib/stickers";
+import { stickerIcons, stickerIds, emojiStickers, type Sticker } from "@/lib/stickers";
 import { supabase } from "@/lib/supabase";
 import { InviteHero } from "@/components/InviteHero";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,35 @@ export default function CreatePage() {
   const [effect, setEffect] = useState(true);
 
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const theme = themes[themeKey];
+  const isImageCover = Boolean(coverId && coverId.startsWith("http"));
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setError("이미지는 8MB 이하로 올려줘요.");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error: upError } = await supabase.storage
+      .from("covers")
+      .upload(path, file, { contentType: file.type });
+    setUploading(false);
+    if (upError) {
+      setError("업로드 실패: " + upError.message);
+      return;
+    }
+    const { data } = supabase.storage.from("covers").getPublicUrl(path);
+    setCoverId(data.publicUrl);
+  }
 
   const dateLabel =
     dateUndecided || !startsAt
@@ -225,7 +252,44 @@ export default function CreatePage() {
                   {c.label}
                 </button>
               ))}
+              {/* 갤러리 이미지 업로드 */}
+              <label
+                className={cn(
+                  "flex h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-xs text-muted-foreground transition hover:bg-accent/50",
+                  isImageCover && "border-solid ring-2 ring-primary ring-offset-2"
+                )}
+                style={
+                  isImageCover
+                    ? {
+                        backgroundImage: `url(${coverId})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        color: "white",
+                        textShadow: "0 1px 4px rgba(0,0,0,.6)",
+                      }
+                    : undefined
+                }
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-4 w-4" />
+                )}
+                {uploading ? "올리는 중" : isImageCover ? "사진 변경" : "내 사진"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleCoverUpload}
+                  disabled={uploading}
+                />
+              </label>
             </div>
+            {isImageCover && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                사진 위엔 가독성을 위해 어두운 필터가 살짝 깔려요
+              </p>
+            )}
           </div>
         )}
 
@@ -287,26 +351,44 @@ export default function CreatePage() {
         )}
 
         {tab === "sticker" && (
-          <div>
-            <Label className="mb-2 block">스티커 — 탭해서 추가, 캔버스에서 드래그로 이동</Label>
-            <div className="grid grid-cols-8 gap-2">
-              {stickerIds.map((id) => {
-                const Icon = stickerIcons[id];
-                return (
+          <div className="space-y-4">
+            <div>
+              <Label className="mb-2 block">아이콘 스티커 — 탭해서 추가, 캔버스에서 드래그</Label>
+              <div className="grid grid-cols-8 gap-2">
+                {stickerIds.map((id) => {
+                  const Icon = stickerIcons[id];
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => addSticker(id)}
+                      className="flex aspect-square items-center justify-center rounded-lg border border-input text-foreground/80 transition hover:bg-accent active:scale-90"
+                      aria-label={`${id} 스티커 추가`}
+                    >
+                      <Icon className="h-5 w-5" strokeWidth={1.75} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <Label className="mb-2 block">이모지 스티커</Label>
+              <div className="grid grid-cols-8 gap-2">
+                {emojiStickers.map((em) => (
                   <button
-                    key={id}
+                    key={em}
                     type="button"
-                    onClick={() => addSticker(id)}
-                    className="flex aspect-square items-center justify-center rounded-lg border border-input text-foreground/80 transition hover:bg-accent active:scale-90"
-                    aria-label={`${id} 스티커 추가`}
+                    onClick={() => addSticker(`emoji:${em}`)}
+                    className="flex aspect-square items-center justify-center rounded-lg border border-input text-xl transition hover:bg-accent active:scale-90"
+                    aria-label={`${em} 스티커 추가`}
                   >
-                    <Icon className="h-5 w-5" strokeWidth={1.75} />
+                    {em}
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
             {stickers.length > 0 && (
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {stickers.length}개 배치됨 · 스티커를 탭하면 삭제(✕) 버튼이 떠요
               </p>
             )}

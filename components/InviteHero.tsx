@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { CalendarDays, MapPin, X } from "lucide-react";
 import type { Theme } from "@/lib/themes";
 import { getCover } from "@/lib/covers";
-import { stickerIcons, type Sticker } from "@/lib/stickers";
+import { stickerIcons, isEmojiSticker, emojiOf, type Sticker } from "@/lib/stickers";
 import { ThemeEffect } from "@/components/ThemeEffect";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,8 @@ export function InviteHero({
   className,
 }: Props) {
   const canvasRef = useRef<HTMLElement>(null);
-  const cover = getCover(coverId);
+  const isImageCover = Boolean(coverId && coverId.startsWith("http"));
+  const cover = isImageCover ? null : getCover(coverId);
   const HeroIcon = theme.Icon;
 
   function startDrag(e: React.PointerEvent, uid: string) {
@@ -72,19 +73,28 @@ export function InviteHero({
       ref={canvasRef}
       onPointerDown={editable ? () => onSelect?.(null) : undefined}
       className={cn(
-        "relative overflow-hidden bg-gradient-to-br px-6 pb-14 pt-14 text-center text-white",
-        cover ? cover.tw : theme.gradient,
+        "relative overflow-hidden px-6 pb-14 pt-14 text-center text-white",
+        !isImageCover && "bg-gradient-to-br",
+        !isImageCover && (cover ? cover.tw : theme.gradient),
         editable && "select-none touch-none",
         className
       )}
+      style={
+        isImageCover
+          ? { backgroundImage: `url(${coverId})`, backgroundSize: "cover", backgroundPosition: "center" }
+          : undefined
+      }
     >
+      {/* 이미지 커버일 때 가독성용 딤 */}
+      {isImageCover && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
       {effect && <ThemeEffect icons={theme.particles} />}
 
       {/* 스티커 레이어 */}
       <div className={cn("absolute inset-0", editable ? "z-20" : "z-[5] pointer-events-none")}>
         {stickers.map((s) => {
-          const Icon = stickerIcons[s.icon];
-          if (!Icon) return null;
+          const emoji = isEmojiSticker(s.icon);
+          const Icon = emoji ? null : stickerIcons[s.icon];
+          if (!emoji && !Icon) return null;
           const selected = editable && selectedUid === s.uid;
           return (
             <span
@@ -104,7 +114,13 @@ export function InviteHero({
                 transform: `translate(-50%,-50%) rotate(${s.rot}deg)`,
               }}
             >
-              <Icon size={s.size} strokeWidth={1.75} />
+              {emoji ? (
+                <span className="block leading-none" style={{ fontSize: s.size }}>
+                  {emojiOf(s.icon)}
+                </span>
+              ) : (
+                Icon && <Icon size={s.size} strokeWidth={1.75} />
+              )}
               {selected && (
                 <button
                   type="button"

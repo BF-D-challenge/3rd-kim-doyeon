@@ -40,6 +40,20 @@ export const stickerIcons: Record<string, LucideIcon> = {
 
 export const stickerIds = Object.keys(stickerIcons);
 
+// 이모지 스티커 팔레트 (아이콘과 별개로 원하는 사람만)
+export const emojiStickers = [
+  "🎂", "🎉", "🥳", "🍻", "🥂", "🍕", "🏠", "✨",
+  "❤️", "🔥", "😂", "💃", "🎁", "🌸", "🎈", "⭐",
+];
+
+// icon 필드가 "emoji:🎂" 형태면 이모지 스티커
+export function isEmojiSticker(icon: string) {
+  return icon.startsWith("emoji:");
+}
+export function emojiOf(icon: string) {
+  return icon.slice("emoji:".length);
+}
+
 // 초대장 위에 배치된 스티커 1개
 export type Sticker = {
   uid: string; // 배치 인스턴스 id
