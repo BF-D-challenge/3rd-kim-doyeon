@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
@@ -31,15 +32,12 @@ async function loadKoreanFont(text: string): Promise<ArrayBuffer | null> {
 }
 
 export default async function OgImage({ params }: { params: { slug: string } }) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
   let title = "초대장이 도착했어요";
   let description = "이름만 남기면 참석 완료";
   let themeKey = "birthday";
 
-  if (url && anon) {
-    const supabase = createClient(url, anon);
+  {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const { data } = await supabase
       .from("events")
       .select("title, description, theme")
