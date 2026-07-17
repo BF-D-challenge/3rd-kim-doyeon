@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { themeList } from "@/lib/themes";
 
@@ -17,16 +18,27 @@ export default function Home() {
           테마 입힌 초대장 하나로.<br />
           <span className="text-foreground/70">받는 순간 &ldquo;오 뭐야 ㅋㅋ&rdquo;</span>
         </p>
-        <div className="mb-10 flex justify-center gap-3 text-3xl">
-          {themeList.map((t) => (
-            <span key={t.key} title={t.label} aria-label={t.label}>
-              {t.emoji}
-            </span>
-          ))}
+        <div className="mb-10 flex justify-center gap-3">
+          {themeList.map((t) => {
+            const Icon = t.Icon;
+            return (
+              <span
+                key={t.key}
+                title={t.label}
+                aria-label={t.label}
+                className="flex h-11 w-11 items-center justify-center rounded-xl"
+                style={{ backgroundColor: `${t.accent}14`, color: t.accent }}
+              >
+                <Icon className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+            );
+          })}
         </div>
       </div>
       <Button asChild size="lg" className="h-14 w-full rounded-xl text-base">
-        <Link href="/create">초대장 만들기 →</Link>
+        <Link href="/create">
+          초대장 만들기 <ArrowRight className="ml-1 h-4 w-4" />
+        </Link>
       </Button>
       <p className="mt-4 text-center text-xs text-muted-foreground">
         가입 없이 10초 · 게스트는 이름만 입력하면 끝

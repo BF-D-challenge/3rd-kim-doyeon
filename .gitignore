@@ -34,3 +34,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 개인 작업 메모·로컬 도구 (git 미포함)
+prds/.obsidian/
+prds/*주차.md
+prds/모디-라이브테스트-체크리스트.md

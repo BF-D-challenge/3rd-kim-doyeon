@@ -69,22 +69,30 @@ export default function CreatePage() {
 
         <Label className="mb-2 block">테마</Label>
         <div className="mb-6 grid grid-cols-4 gap-2">
-          {themeList.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTheme(t.key)}
-              className={cn(
-                "flex flex-col items-center gap-1 rounded-xl border py-3 transition",
-                theme === t.key
-                  ? "border-primary bg-accent ring-1 ring-primary"
-                  : "border-input hover:bg-accent/50"
-              )}
-            >
-              <span className="text-2xl">{t.emoji}</span>
-              <span className="text-xs text-muted-foreground">{t.label}</span>
-            </button>
-          ))}
+          {themeList.map((t) => {
+            const Icon = t.Icon;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTheme(t.key)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-xl border py-3 transition",
+                  theme === t.key
+                    ? "border-primary bg-accent ring-1 ring-primary"
+                    : "border-input hover:bg-accent/50"
+                )}
+              >
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-lg"
+                  style={{ backgroundColor: `${t.accent}14`, color: t.accent }}
+                >
+                  <Icon className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <span className="text-xs text-muted-foreground">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="mb-6">
