@@ -33,7 +33,7 @@ export type EventRow = {
   // 꾸미기 (구버전 행은 null일 수 있음)
   cover?: string | null;
   stickers?: unknown;
-  effect?: boolean | null;
+  effect?: string | boolean | null;
   host_token?: string | null;
 };
 

@@ -5,7 +5,8 @@ import { CalendarDays, MapPin, X } from "lucide-react";
 import type { Theme } from "@/lib/themes";
 import { getCover } from "@/lib/covers";
 import { stickerIcons, isEmojiSticker, emojiOf, type Sticker } from "@/lib/stickers";
-import { ThemeEffect } from "@/components/ThemeEffect";
+import type { EffectType } from "@/lib/effects";
+import { EffectLayer } from "@/components/EffectLayer";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
   dateLabel: string;
   placeLabel: string;
   stickers: Sticker[];
-  effect: boolean;
+  effect: EffectType;
   // 에디터 모드
   editable?: boolean;
   selectedUid?: string | null;
@@ -87,7 +88,11 @@ export function InviteHero({
     >
       {/* 이미지 커버일 때 가독성용 딤 */}
       {isImageCover && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
-      {effect && <ThemeEffect icons={theme.particles} />}
+      <EffectLayer
+        type={effect}
+        icons={theme.particles}
+        emojis={stickers.filter((s) => isEmojiSticker(s.icon)).map((s) => emojiOf(s.icon))}
+      />
 
       {/* 스티커 레이어 */}
       <div className={cn("absolute inset-0", editable ? "z-20" : "z-[5] pointer-events-none")}>

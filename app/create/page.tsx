@@ -15,6 +15,7 @@ import {
 import { themes, themeList, type ThemeKey } from "@/lib/themes";
 import { covers } from "@/lib/covers";
 import { stickerIcons, stickerIds, emojiStickers, type Sticker } from "@/lib/stickers";
+import { effectOptions, type EffectType } from "@/lib/effects";
 import { supabase } from "@/lib/supabase";
 import { InviteHero } from "@/components/InviteHero";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ export default function CreatePage() {
   const [place, setPlace] = useState("");
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
-  const [effect, setEffect] = useState(true);
+  const [effect, setEffect] = useState<EffectType>("float");
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -396,12 +397,35 @@ export default function CreatePage() {
         )}
 
         {tab === "effect" && (
-          <div className="flex items-center justify-between rounded-xl border px-4 py-4">
-            <div>
-              <p className="text-sm font-medium">떠다니는 파티클</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">테마 아이콘이 은은하게 떠올라요</p>
+          <div>
+            <Label className="mb-2 block">이펙트 — 캔버스에서 바로 미리보기</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {effectOptions.map((opt) => {
+                const Icon = opt.Icon;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setEffect(opt.key)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 rounded-xl border py-3.5 transition",
+                      effect === opt.key
+                        ? "border-primary bg-accent ring-1 ring-primary"
+                        : "border-input hover:bg-accent/50"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" strokeWidth={1.75} />
+                    <span className="text-xs">{opt.label}</span>
+                  </button>
+                );
+              })}
             </div>
-            <Switch checked={effect} onCheckedChange={setEffect} />
+            <p className="mt-3 text-xs text-muted-foreground">
+              {effectOptions.find((o) => o.key === effect)?.hint}
+              {effect === "emoji" &&
+                stickers.filter((s) => s.icon.startsWith("emoji:")).length === 0 &&
+                " — 스티커 탭에서 이모지를 추가해봐요!"}
+            </p>
           </div>
         )}
       </div>

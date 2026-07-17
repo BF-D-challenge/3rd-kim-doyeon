@@ -52,3 +52,15 @@ alter table public.events
   add column if not exists stickers jsonb not null default '[]',
   add column if not exists effect boolean not null default true,
   add column if not exists host_token text;
+
+-- [마이그레이션 2026-07-16 #2] 이펙트 종류화 (boolean → text)
+alter table public.events drop column if exists effect;
+alter table public.events add column effect text not null default 'float';
+
+-- 커버 이미지 저장소 (public 버킷 + 익명 업로드/읽기)
+insert into storage.buckets (id, name, public) values ('covers','covers',true)
+on conflict (id) do nothing;
+drop policy if exists "covers_upload" on storage.objects;
+create policy "covers_upload" on storage.objects for insert with check (bucket_id = 'covers');
+drop policy if exists "covers_read" on storage.objects;
+create policy "covers_read" on storage.objects for select using (bucket_id = 'covers');

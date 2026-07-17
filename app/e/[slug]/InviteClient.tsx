@@ -15,6 +15,7 @@ import type { LucideIcon } from "lucide-react";
 import { supabase, type EventRow, type RsvpRow } from "@/lib/supabase";
 import { getTheme } from "@/lib/themes";
 import type { Sticker } from "@/lib/stickers";
+import { normalizeEffect } from "@/lib/effects";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -202,7 +203,7 @@ export default function InviteClient({ event }: { event: EventRow }) {
         dateLabel={dateLabel}
         placeLabel={event.place ?? "미정"}
         stickers={(Array.isArray(event.stickers) ? event.stickers : []) as Sticker[]}
-        effect={event.effect ?? true}
+        effect={normalizeEffect(event.effect)}
       />
 
       {/* RSVP */}
