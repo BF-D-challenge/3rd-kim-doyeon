@@ -45,3 +45,10 @@ create policy "rsvps_update" on public.rsvps for update using (true);
 
 -- 4) (선택) 실시간 명단 스노볼: rsvps 테이블 realtime 켜기
 alter publication supabase_realtime add table public.rsvps;
+
+-- [마이그레이션 2026-07-16] 꾸미기 에디터 + 호스트 식별
+alter table public.events
+  add column if not exists cover text,
+  add column if not exists stickers jsonb not null default '[]',
+  add column if not exists effect boolean not null default true,
+  add column if not exists host_token text;

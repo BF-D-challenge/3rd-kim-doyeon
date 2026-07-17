@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
+import { getCover } from "@/lib/covers";
 
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
@@ -35,22 +36,26 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
   let title = "초대장이 도착했어요";
   let description = "이름만 남기면 참석 완료";
   let themeKey = "birthday";
+  let coverId: string | null = null;
 
   {
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const { data } = await supabase
       .from("events")
-      .select("title, description, theme")
+      .select("title, description, theme, cover")
       .eq("slug", params.slug)
       .single();
     if (data) {
       title = data.title;
       if (data.description) description = data.description;
       if (data.theme) themeKey = data.theme;
+      if (data.cover) coverId = data.cover;
     }
   }
 
   const style = THEME_STYLE[themeKey] ?? THEME_STYLE.birthday;
+  const cover = getCover(coverId);
+  const bg = cover ? cover.css : style.bg;
   const fontText = `${title}${description}${style.chip}모디 · 초대가 곧 기대감이 되는 앱이름만 남기면 참석 완료`;
   const font = await loadKoreanFont(fontText);
 
@@ -64,7 +69,7 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: style.bg,
+          background: bg,
           color: "#ffffff",
           fontFamily: "NotoSansKR",
           padding: 80,

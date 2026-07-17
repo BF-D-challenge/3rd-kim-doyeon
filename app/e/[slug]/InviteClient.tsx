@@ -7,8 +7,6 @@ import {
   PartyPopper,
   Hourglass,
   Frown,
-  CalendarDays,
-  MapPin,
   Check,
   Copy,
   Link2,
@@ -16,12 +14,12 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { supabase, type EventRow, type RsvpRow } from "@/lib/supabase";
 import { getTheme } from "@/lib/themes";
+import type { Sticker } from "@/lib/stickers";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ThemeEffect } from "@/components/ThemeEffect";
-import { cn } from "@/lib/utils";
+import { InviteHero } from "@/components/InviteHero";
 
 type Status = "going" | "maybe" | "no";
 
@@ -154,8 +152,6 @@ export default function InviteClient({ event }: { event: EventRow }) {
       })
     : "미정";
 
-  const HeroIcon = theme.Icon;
-
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background">
       {justCreated && (
@@ -177,34 +173,17 @@ export default function InviteClient({ event }: { event: EventRow }) {
         </div>
       )}
 
-      {/* 초대장 히어로 */}
-      <section
-        className={cn(
-          "relative overflow-hidden bg-gradient-to-br px-6 pb-14 pt-14 text-center text-white",
-          theme.gradient
-        )}
-      >
-        <ThemeEffect icons={theme.particles} />
-        <div className="relative z-10">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-            <HeroIcon className="h-8 w-8" strokeWidth={1.75} />
-          </div>
-          <h1 className="mb-3 text-3xl font-extrabold tracking-tight drop-shadow-sm">
-            {event.title}
-          </h1>
-          {event.description && (
-            <p className="mb-6 text-lg text-white/90">{event.description}</p>
-          )}
-          <div className="inline-flex flex-col gap-1.5 rounded-2xl bg-black/20 px-5 py-3 text-sm backdrop-blur">
-            <span className="inline-flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 opacity-80" /> {dateLabel}
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 opacity-80" /> {event.place ?? "미정"}
-            </span>
-          </div>
-        </div>
-      </section>
+      {/* 초대장 히어로 (호스트가 꾸민 그대로) */}
+      <InviteHero
+        theme={theme}
+        coverId={event.cover}
+        title={event.title}
+        description={event.description}
+        dateLabel={dateLabel}
+        placeLabel={event.place ?? "미정"}
+        stickers={(Array.isArray(event.stickers) ? event.stickers : []) as Sticker[]}
+        effect={event.effect ?? true}
+      />
 
       {/* RSVP */}
       <section className="-mt-6 px-6">

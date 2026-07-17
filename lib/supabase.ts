@@ -30,6 +30,11 @@ export type EventRow = {
   place: string | null;
   description: string | null;
   created_at: string;
+  // 꾸미기 (구버전 행은 null일 수 있음)
+  cover?: string | null;
+  stickers?: unknown;
+  effect?: boolean | null;
+  host_token?: string | null;
 };
 
 export type RsvpRow = {
