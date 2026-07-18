@@ -64,3 +64,6 @@ drop policy if exists "covers_upload" on storage.objects;
 create policy "covers_upload" on storage.objects for insert with check (bucket_id = 'covers');
 drop policy if exists "covers_read" on storage.objects;
 create policy "covers_read" on storage.objects for select using (bucket_id = 'covers');
+
+-- [마이그레이션 2026-07-17] RSVP 한마디 필드
+alter table public.rsvps add column if not exists comment text;

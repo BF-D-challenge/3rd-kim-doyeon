@@ -44,4 +44,6 @@ export type RsvpRow = {
   status: "going" | "maybe" | "no";
   guest_token: string | null;
   created_at: string;
+  // 한마디 (마이그레이션 전 행은 없음)
+  comment?: string | null;
 };

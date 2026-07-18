@@ -19,7 +19,6 @@ import { normalizeEffect } from "@/lib/effects";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { InviteHero } from "@/components/InviteHero";
 
 type Status = "going" | "maybe" | "no";
@@ -48,6 +47,7 @@ export default function InviteClient({ event }: { event: EventRow }) {
 
   const [rsvps, setRsvps] = useState<RsvpRow[]>([]);
   const [name, setName] = useState("");
+  const [comment, setComment] = useState("");
   const [myStatus, setMyStatus] = useState<Status | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -131,10 +131,12 @@ export default function InviteClient({ event }: { event: EventRow }) {
       .eq("guest_token", token)
       .maybeSingle();
 
+    // comment 키는 값이 있을 때만 포함 (마이그레이션 전 DB에서도 안전)
+    const extra = comment.trim() ? { comment: comment.trim() } : {};
     if (existing) {
       await supabase
         .from("rsvps")
-        .update({ guest_name: name.trim(), status })
+        .update({ guest_name: name.trim(), status, ...extra })
         .eq("id", (existing as { id: string }).id);
     } else {
       await supabase.from("rsvps").insert({
@@ -142,6 +144,7 @@ export default function InviteClient({ event }: { event: EventRow }) {
         guest_name: name.trim(),
         status,
         guest_token: token,
+        ...extra,
       });
     }
     setSubmitting(false);
@@ -244,7 +247,13 @@ export default function InviteClient({ event }: { event: EventRow }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="이름"
-                className="mb-4 h-12 text-center text-base"
+                className="mb-2 h-12 text-center text-base"
+              />
+              <Input
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="한마디 (선택) — 모두에게 보여요"
+                className="mb-4 h-11 text-center text-sm"
               />
               <div className="grid grid-cols-3 gap-2">
                 {(Object.keys(STATUS_META) as Status[]).map((s) => {
@@ -341,19 +350,22 @@ function NameList({
   if (people.length === 0) return null;
   const { label, Icon } = meta;
   return (
-    <div className="mb-4">
-      <p className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+    <div className="mb-5">
+      <p className="mb-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
         <Icon className="h-4 w-4" /> {label}
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div className="divide-y">
         {people.map((p) => (
-          <Badge
-            key={p.id}
-            variant={highlight ? "default" : "secondary"}
-            className="rounded-full px-3 py-1 text-sm font-normal"
-          >
-            {p.guest_name}
-          </Badge>
+          <div key={p.id} className="flex items-baseline gap-2 py-2.5">
+            <span className={highlight ? "text-sm font-semibold" : "text-sm font-medium"}>
+              {p.guest_name}
+            </span>
+            {p.comment && (
+              <span className="truncate text-xs italic text-muted-foreground">
+                &ldquo;{p.comment}&rdquo;
+              </span>
+            )}
+          </div>
         ))}
       </div>
     </div>

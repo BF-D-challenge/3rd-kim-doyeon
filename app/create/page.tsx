@@ -32,17 +32,19 @@ function randomSlug(len = 6) {
 }
 
 type Tab = "theme" | "cover" | "text" | "sticker" | "effect";
+type Step = "kind" | "edit" | "preview";
 
 const TABS: { key: Tab; label: string; Icon: typeof Palette }[] = [
   { key: "theme", label: "테마", Icon: Palette },
   { key: "cover", label: "커버", Icon: Layers },
-  { key: "text", label: "문구", Icon: Type },
+  { key: "text", label: "정보", Icon: Type },
   { key: "sticker", label: "스티커", Icon: Shapes },
   { key: "effect", label: "이펙트", Icon: Wand2 },
 ];
 
 export default function CreatePage() {
   const router = useRouter();
+  const [step, setStep] = useState<Step>("kind");
   const [tab, setTab] = useState<Tab>("theme");
 
   const [themeKey, setThemeKey] = useState<ThemeKey>("birthday");
@@ -112,10 +114,22 @@ export default function CreatePage() {
     setSelectedUid(s.uid);
   }
 
+  function goPreview() {
+    setError(null);
+    if (!title.trim()) {
+      setError("제목은 필요해요 — 게스트가 뭘 받았는지 알 수 있게.");
+      setTab("text");
+      return;
+    }
+    setSelectedUid(null);
+    setStep("preview");
+  }
+
   async function handleSubmit() {
     setError(null);
     if (!title.trim()) {
       setError("제목은 필수예요.");
+      setStep("edit");
       setTab("text");
       return;
     }
@@ -152,21 +166,100 @@ export default function CreatePage() {
     router.push(`/e/${slug}?created=1`);
   }
 
+  // ── C1: 모임 종류 선택 ──
+  if (step === "kind") {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background px-5 py-8">
+        <p className="text-xs font-medium tracking-widest text-muted-foreground">초대장 만들기</p>
+        <h1 className="mt-3 text-2xl font-bold tracking-tight">어떤 모임이에요?</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          하나 고르면 테마·아이콘·이펙트가 세트로 적용돼요
+        </p>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {themeList.map((t) => {
+            const Icon = t.Icon;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setThemeKey(t.key);
+                  setStep("edit");
+                }}
+                className="flex flex-col items-start gap-2 rounded-2xl border border-input p-4 text-left transition hover:bg-accent/50 active:scale-[0.98]"
+              >
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: `${t.accent}14`, color: t.accent }}
+                >
+                  <Icon className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <span className="text-sm font-semibold">{t.label}</span>
+                <span className="text-xs leading-snug text-muted-foreground">{t.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          나중에 캔버스에서 언제든 바꿀 수 있어요
+        </p>
+      </main>
+    );
+  }
+
+  // ── H1: 게시 전 확인 (게스트 시점) ──
+  if (step === "preview") {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background">
+        <div className="border-b px-4 py-3">
+          <p className="text-sm font-semibold leading-none">게시 전 확인</p>
+          <p className="mt-1 text-xs text-muted-foreground">지금 게스트의 눈으로 보고 있어요</p>
+        </div>
+        <InviteHero
+          theme={theme}
+          coverId={coverId}
+          title={title}
+          description={description || null}
+          dateLabel={dateLabel}
+          placeLabel={placeUndecided || !place.trim() ? "미정" : place.trim()}
+          stickers={stickers}
+          effect={effect}
+        />
+        {error && <p className="px-5 pt-3 text-sm text-destructive">{error}</p>}
+        <div className="mt-auto space-y-2 p-5">
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            size="lg"
+            className="h-14 w-full rounded-xl text-base"
+          >
+            {loading && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+            이대로 게시하기
+          </Button>
+          <Button onClick={() => setStep("edit")} variant="ghost" size="lg" className="w-full">
+            돌아가서 수정
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
+  // ── C2: 캔버스 편집 ──
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background">
       {/* 상단 바 */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <p className="text-sm font-semibold leading-none">초대장 만들기</p>
-          <p className="mt-1 text-xs text-muted-foreground">캔버스를 직접 꾸며봐요</p>
+          <p className="mt-1 text-xs text-muted-foreground">게스트가 보는 비율 그대로예요</p>
         </div>
-        <Button onClick={handleSubmit} disabled={loading} size="sm" className="gap-1.5">
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-          완성
+        <Button onClick={goPreview} size="sm" className="gap-1.5">
+          <Check className="h-3.5 w-3.5" />
+          미리보기
         </Button>
       </div>
 
-      {/* 캔버스 (실시간 미리보기) */}
+      {/* 캔버스 (실시간 미리보기 · 게스트 뷰 세로 비율) */}
       <InviteHero
         theme={theme}
         coverId={coverId}
@@ -186,6 +279,7 @@ export default function CreatePage() {
           setStickers((prev) => prev.filter((s) => s.uid !== uid));
           setSelectedUid(null);
         }}
+        className="flex aspect-[3/4] flex-col justify-center"
       />
 
       {error && <p className="px-5 pt-3 text-sm text-destructive">{error}</p>}
