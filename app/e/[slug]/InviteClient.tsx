@@ -61,10 +61,36 @@ export default function InviteClient({ event }: { event: EventRow }) {
 
   const shareMessage = `${event.title}\n초대장 왔어요 🎉 이름만 남기면 참석 완료!\n👉 ${pageUrl}`;
 
+  // 클립보드 API 실패 환경(카톡 인앱 등) 대비 폴백 포함
+  async function copyText(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+  }
+
   async function copyMessage() {
-    await navigator.clipboard.writeText(shareMessage);
-    setCopiedMsg(true);
-    setTimeout(() => setCopiedMsg(false), 1800);
+    const url = window.location.href.split("?")[0];
+    const ok = await copyText(`${event.title}\n초대장 왔어요 🎉 이름만 남기면 참석 완료!\n👉 ${url}`);
+    if (ok) {
+      setCopiedMsg(true);
+      setTimeout(() => setCopiedMsg(false), 1800);
+    }
   }
 
   const fetchRsvps = useCallback(async () => {
@@ -134,9 +160,11 @@ export default function InviteClient({ event }: { event: EventRow }) {
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(pageUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    const ok = await copyText(window.location.href.split("?")[0]);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
   }
 
   const going = rsvps.filter((r) => r.status === "going");
