@@ -50,6 +50,7 @@ export default function InviteClient({ event }: { event: EventRow }) {
   const [comment, setComment] = useState("");
   const [myStatus, setMyStatus] = useState<Status | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState(false);
@@ -121,7 +122,7 @@ export default function InviteClient({ event }: { event: EventRow }) {
   async function submit(status: Status) {
     if (!name.trim()) return;
     setSubmitting(true);
-    setMyStatus(status);
+    setRsvpError(null);
     const token = getGuestToken(event.id);
 
     const { data: existing } = await supabase
@@ -130,24 +131,31 @@ export default function InviteClient({ event }: { event: EventRow }) {
       .eq("event_id", event.id)
       .eq("guest_token", token)
       .maybeSingle();
+    const id = (existing as { id: string } | null)?.id;
 
-    // comment 키는 값이 있을 때만 포함 (마이그레이션 전 DB에서도 안전)
-    const extra = comment.trim() ? { comment: comment.trim() } : {};
-    if (existing) {
-      await supabase
-        .from("rsvps")
-        .update({ guest_name: name.trim(), status, ...extra })
-        .eq("id", (existing as { id: string }).id);
-    } else {
-      await supabase.from("rsvps").insert({
-        event_id: event.id,
-        guest_name: name.trim(),
-        status,
-        guest_token: token,
-        ...extra,
-      });
+    const base: Record<string, unknown> = { guest_name: name.trim(), status };
+    const full = comment.trim() ? { ...base, comment: comment.trim() } : base;
+
+    // comment 컬럼이 아직 없는 DB(마이그레이션 전)면 comment 빼고 재시도 → 참석은 무조건 저장
+    async function write(payload: Record<string, unknown>) {
+      if (id) return supabase.from("rsvps").update(payload).eq("id", id);
+      return supabase.from("rsvps").insert({ event_id: event.id, guest_token: token, ...payload });
+    }
+    const isSchemaErr = (e: { code?: string; message?: string } | null) =>
+      !!e && (e.code === "PGRST204" || e.code === "42703" || /comment/i.test(e.message ?? ""));
+
+    let { error } = await write(full);
+    if (error && isSchemaErr(error)) {
+      ({ error } = await write(base)); // 한마디 컬럼 없으면 참석만 저장
     }
     setSubmitting(false);
+
+    if (error) {
+      setRsvpError("응답 저장에 실패했어요. 잠시 후 다시 시도해줘요.");
+      return;
+    }
+
+    setMyStatus(status);
     setDone(true);
     fetchRsvps();
 
@@ -277,6 +285,9 @@ export default function InviteClient({ event }: { event: EventRow }) {
                   );
                 })}
               </div>
+              {rsvpError && (
+                <p className="mt-3 text-center text-sm text-destructive">{rsvpError}</p>
+              )}
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 가입·전화번호 없이 이름만 · 명단은 서로 볼 수 있어요
               </p>
