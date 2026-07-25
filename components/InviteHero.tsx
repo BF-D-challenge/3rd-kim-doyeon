@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { CalendarDays, MapPin, X } from "lucide-react";
+import { CalendarDays, MapPin, X, CircleCheck } from "lucide-react";
 import type { Theme } from "@/lib/themes";
 import { getCover } from "@/lib/covers";
 import { stickerIcons, isEmojiSticker, emojiOf, type Sticker } from "@/lib/stickers";
@@ -18,6 +18,7 @@ type Props = {
   placeLabel: string;
   stickers: Sticker[];
   effect: EffectType;
+  dateConfirmed?: boolean;
   // 에디터 모드
   editable?: boolean;
   selectedUid?: string | null;
@@ -36,6 +37,7 @@ export function InviteHero({
   placeLabel,
   stickers,
   effect,
+  dateConfirmed,
   editable,
   selectedUid,
   onSelect,
@@ -157,6 +159,11 @@ export function InviteHero({
         <div className="inline-flex flex-col gap-1.5 rounded-2xl bg-black/20 px-5 py-3 text-sm backdrop-blur">
           <span className="inline-flex items-center gap-2">
             <CalendarDays className="h-4 w-4 opacity-80" /> {dateLabel}
+            {dateConfirmed && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-black">
+                <CircleCheck className="h-3 w-3" /> 확정
+              </span>
+            )}
           </span>
           <span className="inline-flex items-center gap-2">
             <MapPin className="h-4 w-4 opacity-80" /> {placeLabel}

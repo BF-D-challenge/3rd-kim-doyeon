@@ -4,6 +4,9 @@ import { supabase, supabaseReady, type EventRow } from "@/lib/supabase";
 import { getTheme } from "@/lib/themes";
 import InviteClient from "./InviteClient";
 
+// 확정·투표 등 실시간 데이터라 항상 최신 조회 (캐시 금지)
+export const dynamic = "force-dynamic";
+
 async function getEvent(slug: string): Promise<EventRow | null> {
   if (!supabaseReady) return null;
   const { data } = await supabase.from("events").select("*").eq("slug", slug).single();

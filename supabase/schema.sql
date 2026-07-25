@@ -67,3 +67,12 @@ create policy "covers_read" on storage.objects for select using (bucket_id = 'co
 
 -- [마이그레이션 2026-07-17] RSVP 한마디 필드
 alter table public.rsvps add column if not exists comment text;
+
+-- [마이그레이션 2026-07-25] 모디 루프: 날짜 확정 + 후보 투표
+alter table public.events add column if not exists confirmed_at timestamptz;
+alter table public.events add column if not exists date_options jsonb not null default '[]';
+alter table public.rsvps  add column if not exists date_votes  jsonb not null default '[]';
+
+-- [마이그레이션 2026-07-25 #2] events UPDATE 정책 (날짜 확정 등)
+drop policy if exists "events_update" on public.events;
+create policy "events_update" on public.events for update using (true) with check (true);

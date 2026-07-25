@@ -11,6 +11,8 @@ import {
   Loader2,
   Check,
   ImagePlus,
+  Plus,
+  X,
 } from "lucide-react";
 import { themes, themeList, type ThemeKey } from "@/lib/themes";
 import { covers } from "@/lib/covers";
@@ -51,8 +53,10 @@ export default function CreatePage() {
   const [coverId, setCoverId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dateUndecided, setDateUndecided] = useState(true);
+  const [dateMode, setDateMode] = useState<"unset" | "fixed" | "poll">("unset");
   const [startsAt, setStartsAt] = useState("");
+  const [dateOptions, setDateOptions] = useState<string[]>([]);
+  const [newOption, setNewOption] = useState("");
   const [placeUndecided, setPlaceUndecided] = useState(true);
   const [place, setPlace] = useState("");
   const [stickers, setStickers] = useState<Sticker[]>([]);
@@ -90,16 +94,28 @@ export default function CreatePage() {
     setCoverId(data.publicUrl);
   }
 
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleString("ko-KR", {
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   const dateLabel =
-    dateUndecided || !startsAt
-      ? "미정"
-      : new Date(startsAt).toLocaleString("ko-KR", {
-          month: "long",
-          day: "numeric",
-          weekday: "short",
-          hour: "numeric",
-          minute: "2-digit",
-        });
+    dateMode === "fixed" && startsAt
+      ? fmtDate(startsAt)
+      : dateMode === "poll" && dateOptions.length > 0
+        ? `후보 ${dateOptions.length}개 · 투표`
+        : "미정";
+
+  function addOption() {
+    if (!newOption || dateOptions.includes(newOption)) return;
+    setDateOptions((prev) => [...prev, newOption].sort());
+    setNewOption("");
+  }
 
   function addSticker(icon: string) {
     const s: Sticker = {
@@ -142,7 +158,9 @@ export default function CreatePage() {
         slug,
         title: title.trim(),
         theme: themeKey,
-        starts_at: dateUndecided || !startsAt ? null : new Date(startsAt).toISOString(),
+        starts_at: dateMode === "fixed" && startsAt ? new Date(startsAt).toISOString() : null,
+        date_options:
+          dateMode === "poll" ? dateOptions.map((o) => new Date(o).toISOString()) : [],
         place: placeUndecided || !place.trim() ? null : place.trim(),
         description: description.trim() || null,
         cover: coverId,
@@ -411,19 +429,75 @@ export default function CreatePage() {
               />
             </div>
             <div>
-              <div className="mb-2 flex items-center justify-between">
-                <Label htmlFor="date-toggle">날짜 / 시간</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">미정</span>
-                  <Switch id="date-toggle" checked={dateUndecided} onCheckedChange={setDateUndecided} />
-                </div>
+              <Label className="mb-2 block">날짜 / 시간</Label>
+              <div className="mb-3 grid grid-cols-3 gap-2">
+                {([
+                  ["unset", "미정"],
+                  ["fixed", "하나로"],
+                  ["poll", "후보 투표"],
+                ] as const).map(([m, lbl]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setDateMode(m)}
+                    className={cn(
+                      "rounded-xl border py-2.5 text-sm font-medium transition",
+                      dateMode === m
+                        ? "border-primary bg-accent ring-1 ring-primary"
+                        : "border-input text-muted-foreground hover:bg-accent/50"
+                    )}
+                  >
+                    {lbl}
+                  </button>
+                ))}
               </div>
-              {!dateUndecided && (
+
+              {dateMode === "fixed" && (
                 <Input
                   type="datetime-local"
                   value={startsAt}
                   onChange={(e) => setStartsAt(e.target.value)}
                 />
+              )}
+
+              {dateMode === "poll" && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    후보 날짜를 여러 개 열어두면, 게스트가 되는 날을 골라요
+                  </p>
+                  {dateOptions.map((o) => (
+                    <div
+                      key={o}
+                      className="flex items-center justify-between rounded-lg border bg-muted/40 px-3 py-2 text-sm"
+                    >
+                      <span>{fmtDate(o)}</span>
+                      <button
+                        type="button"
+                        onClick={() => setDateOptions((prev) => prev.filter((x) => x !== o))}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="후보 삭제"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <Input
+                      type="datetime-local"
+                      value={newOption}
+                      onChange={(e) => setNewOption(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0 gap-1"
+                      disabled={!newOption}
+                      onClick={addOption}
+                    >
+                      <Plus className="h-4 w-4" /> 추가
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
             <div>

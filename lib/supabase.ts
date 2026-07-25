@@ -19,7 +19,14 @@ function clean(v: string | undefined, fallback: string) {
 
 export const supabaseReady = true;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Next.js 서버 컴포넌트가 Supabase fetch를 캐시해 옛 데이터를 주는 문제 방지 →
+// 모든 조회를 no-store로 (확정·투표 등 실시간 데이터라 항상 최신이어야 함)
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: {
+    fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+      fetch(input, { ...init, cache: "no-store" }),
+  },
+});
 
 export type EventRow = {
   id: string;
@@ -35,6 +42,9 @@ export type EventRow = {
   stickers?: unknown;
   effect?: string | boolean | null;
   host_token?: string | null;
+  // 모디 루프: 날짜 후보(투표) + 확정 시각
+  date_options?: string[] | null; // ISO 문자열 후보들 (비었으면 투표 없음)
+  confirmed_at?: string | null;
 };
 
 export type RsvpRow = {
@@ -46,4 +56,6 @@ export type RsvpRow = {
   created_at: string;
   // 한마디 (마이그레이션 전 행은 없음)
   comment?: string | null;
+  // 게스트가 고른 되는 날짜(ISO 문자열들)
+  date_votes?: string[] | null;
 };
