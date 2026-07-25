@@ -42,6 +42,7 @@ export type EventRow = {
   stickers?: unknown;
   effect?: string | boolean | null;
   host_token?: string | null;
+  host_user_id?: string | null;
   // 모디 루프: 날짜 후보(투표) + 확정 시각
   date_options?: string[] | null; // ISO 문자열 후보들 (비었으면 투표 없음)
   confirmed_at?: string | null;

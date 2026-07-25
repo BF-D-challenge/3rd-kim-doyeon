@@ -19,6 +19,7 @@ import { covers } from "@/lib/covers";
 import { stickerIcons, stickerIds, emojiStickers, type Sticker } from "@/lib/stickers";
 import { effectOptions, type EffectType } from "@/lib/effects";
 import { supabase } from "@/lib/supabase";
+import { useUser } from "@/lib/useUser";
 import { InviteHero } from "@/components/InviteHero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ const TABS: { key: Tab; label: string; Icon: typeof Palette }[] = [
 
 export default function CreatePage() {
   const router = useRouter();
+  const { user } = useUser();
   const [step, setStep] = useState<Step>("kind");
   const [tab, setTab] = useState<Tab>("theme");
 
@@ -167,6 +169,7 @@ export default function CreatePage() {
         stickers,
         effect,
         host_token: hostToken,
+        host_user_id: user?.id ?? null,
       })
       .select("id")
       .single();

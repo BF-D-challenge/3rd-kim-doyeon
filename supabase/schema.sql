@@ -76,3 +76,6 @@ alter table public.rsvps  add column if not exists date_votes  jsonb not null de
 -- [마이그레이션 2026-07-25 #2] events UPDATE 정책 (날짜 확정 등)
 drop policy if exists "events_update" on public.events;
 create policy "events_update" on public.events for update using (true) with check (true);
+
+-- [마이그레이션 2026-07-26] 호스트 계정 연결 (이메일 매직링크)
+alter table public.events add column if not exists host_user_id uuid;

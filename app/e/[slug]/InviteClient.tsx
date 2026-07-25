@@ -23,6 +23,7 @@ import { supabase, type EventRow, type RsvpRow } from "@/lib/supabase";
 import { getTheme } from "@/lib/themes";
 import type { Sticker } from "@/lib/stickers";
 import { normalizeEffect } from "@/lib/effects";
+import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ function getGuestToken(eventId: string) {
 export default function InviteClient({ event: initialEvent }: { event: EventRow }) {
   // 확정 후 로컬에서 즉시 갱신되도록 event를 상태로 보관
   const [event, setEvent] = useState<EventRow>(initialEvent);
+  const { user } = useUser();
   const theme = getTheme(event.theme);
   const searchParams = useSearchParams();
   const justCreated = searchParams.get("created") === "1";
@@ -95,12 +97,14 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
 
   useEffect(() => {
     setPageUrl(window.location.href.split("?")[0]);
-    // 호스트 식별 (생성한 브라우저)
+    // 호스트 식별: ① 로그인 계정이 이 이벤트 주인 ② 또는 생성한 브라우저(토큰)
     const ht = localStorage.getItem(`modi_host_${event.id}`);
-    if (ht && event.host_token && ht === event.host_token) setIsHost(true);
+    const byToken = Boolean(ht && event.host_token && ht === event.host_token);
+    const byAccount = Boolean(user && event.host_user_id && user.id === event.host_user_id);
+    setIsHost(byToken || byAccount);
     // 게스트 회신 여부
     if (localStorage.getItem(`modi_token_${event.id}`)) setHasResponded(true);
-  }, [event.id, event.host_token]);
+  }, [event.id, event.host_token, event.host_user_id, user]);
 
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
