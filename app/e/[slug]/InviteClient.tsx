@@ -69,7 +69,6 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
   const [submitting, setSubmitting] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState(false);
   const [pageUrl, setPageUrl] = useState("");
 
@@ -318,11 +317,9 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
   }
 
   async function copyLink() {
-    const ok = await copyText(window.location.href.split("?")[0]);
-    if (ok) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    }
+    await copyText(window.location.href.split("?")[0]);
+    setCopiedMsg(true);
+    setTimeout(() => setCopiedMsg(false), 1800);
   }
 
   const going = rsvps.filter((r) => r.status === "going");
@@ -409,14 +406,14 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
           </div>
         </div>
 
-        {/* 초대장 보러가기 */}
-        <div className="mt-8 text-center">
-          <a
-            href={`/e/${event.slug}`}
-            className="text-sm text-muted-foreground underline underline-offset-2"
-          >
-            초대장 보기
-          </a>
+        {/* 게시 후 동선: 초대장 보기 + 내 모임에서 관리 */}
+        <div className="mt-8 space-y-2.5">
+          <Button asChild variant="outline" className="h-12 w-full">
+            <a href={`/e/${event.slug}`}>초대장 보기</a>
+          </Button>
+          <Button asChild variant="ghost" className="h-11 w-full text-muted-foreground">
+            <a href="/">내 모임에서 관리하기</a>
+          </Button>
         </div>
       </main>
     );
