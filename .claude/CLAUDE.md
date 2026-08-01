@@ -17,11 +17,19 @@
 - 나중에 필요할 환경변수(코드 붙일 때 `.env.local`에): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_KAKAO_JS_KEY`. 실제 값은 절대 커밋 금지.
 - 배포: 아직 미정. 개발 진행하며 사용자가 직접 정한다 (Vercel 미확정). 임의로 배포 도구를 추가하지 말 것.
 
+## 디자인 규칙
+
+- **UI를 만들거나 수정할 때는 `docs/design-system.md`를 먼저 읽고 그 기준을 따른다.** 토큰·타이포·간격·상태 설계·접근성 규칙이 전부 여기 있다.
+- 색·크기·간격을 하드코딩하지 않는다. semantic 토큰(`bg-primary`, `text-muted-foreground` 등)만 사용.
+- 토큰 자체를 바꿀 땐 개별 화면이 아니라 `app/globals.css` / `tailwind.config.ts`만 수정한다.
+- 모든 화면은 default / loading / empty / error 4상태를 갖춰야 완성으로 본다.
+- 화면 작업을 마쳤으면 `design-review` 스킬로 점검한다.
+
 ## 코딩 규칙
 
 - 게스트 RSVP는 **가입·앱설치·전화번호 없이** 이름만으로. 이 무마찰 원칙을 깨지 말 것.
 - 컴포넌트/유틸은 기존 파일 컨벤션(네이밍·주석 밀도)을 따라간다.
-- 문구·UI 카피는 "진지한 척 → 반전 유머" 밈 톤 유지.
+- 문구·UI 카피는 "진지한 척 → 반전 유머" 밈 톤 유지. 단 **에러 문구는 농담하지 않는다.**
 
 ## Git 워크플로우
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Palette,
@@ -36,6 +36,7 @@ function randomSlug(len = 6) {
 
 type Tab = "theme" | "cover" | "text" | "sticker" | "effect";
 type Step = "kind" | "edit" | "preview";
+const STEP_ORDER: Step[] = ["kind", "edit", "preview"];
 
 const TABS: { key: Tab; label: string; Icon: typeof Palette }[] = [
   { key: "theme", label: "테마", Icon: Palette },
@@ -71,6 +72,35 @@ export default function CreatePage() {
 
   const theme = themes[themeKey];
   const isImageCover = Boolean(coverId && coverId.startsWith("http"));
+
+  // 스텝 ↔ 브라우저 히스토리 동기화: 뒤로가기 = 이전 스텝 (페이지 전체 이탈 방지)
+  const stepRef = useRef<Step>(step);
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+  useEffect(() => {
+    window.history.replaceState({ ...window.history.state, modiStep: "kind" }, "");
+    const onPop = (e: PopStateEvent) => {
+      const s = (e.state?.modiStep as Step) ?? "kind";
+      setStep(s);
+      setSelectedUid(null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  function goStep(next: Step) {
+    const cur = STEP_ORDER.indexOf(stepRef.current);
+    const nxt = STEP_ORDER.indexOf(next);
+    if (nxt > cur) {
+      // 앞으로: 히스토리 항목 추가 → 다음 뒤로가기가 이 스텝으로 복귀
+      window.history.pushState({ ...window.history.state, modiStep: next }, "");
+      setStep(next);
+    } else if (nxt < cur) {
+      // 뒤로: 브라우저 히스토리를 되감아 popstate가 스텝을 되돌리게 함
+      window.history.back();
+    }
+  }
 
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -140,15 +170,15 @@ export default function CreatePage() {
       return;
     }
     setSelectedUid(null);
-    setStep("preview");
+    goStep("preview");
   }
 
   async function handleSubmit() {
     setError(null);
     if (!title.trim()) {
       setError("제목은 필수예요.");
-      setStep("edit");
       setTab("text");
+      goStep("edit");
       return;
     }
     setLoading(true);
@@ -190,7 +220,7 @@ export default function CreatePage() {
   // ── C1: 모임 종류 선택 ──
   if (step === "kind") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background px-5 py-8">
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background px-5 py-8">
         <p className="text-xs font-medium tracking-widest text-muted-foreground">초대장 만들기</p>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">어떤 모임이에요?</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -205,7 +235,7 @@ export default function CreatePage() {
                 type="button"
                 onClick={() => {
                   setThemeKey(t.key);
-                  setStep("edit");
+                  goStep("edit");
                 }}
                 className="flex flex-col items-start gap-2 rounded-2xl border border-input p-4 text-left transition hover:bg-accent/50 active:scale-[0.98]"
               >
@@ -231,7 +261,7 @@ export default function CreatePage() {
   // ── H1: 게시 전 확인 (게스트 시점) ──
   if (step === "preview") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background">
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background">
         <div className="border-b px-4 py-3">
           <p className="text-sm font-semibold leading-none">게시 전 확인</p>
           <p className="mt-1 text-xs text-muted-foreground">지금 게스트의 눈으로 보고 있어요</p>
@@ -257,7 +287,7 @@ export default function CreatePage() {
             {loading && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
             이대로 게시하기
           </Button>
-          <Button onClick={() => setStep("edit")} variant="ghost" size="lg" className="w-full">
+          <Button onClick={() => goStep("edit")} variant="ghost" size="lg" className="w-full">
             돌아가서 수정
           </Button>
         </div>
@@ -267,7 +297,7 @@ export default function CreatePage() {
 
   // ── C2: 캔버스 편집 ──
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background">
       {/* 상단 바 */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
@@ -602,7 +632,7 @@ export default function CreatePage() {
       </div>
 
       {/* 하단 도구 탭 */}
-      <nav className="sticky bottom-0 border-t bg-background/95 backdrop-blur">
+      <nav className="sticky bottom-0 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="grid grid-cols-5">
           {TABS.map(({ key, label, Icon }) => (
             <button

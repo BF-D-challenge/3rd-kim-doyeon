@@ -1,1 +1,10 @@
-{}
+{
+  "/Users/kimdoyeon/moa": {
+    "무시할_목록": ["prds/_인수인계.md"],
+    "항상_올릴_목록": [
+      "app/fonts/PretendardVariable.woff2",
+      "docs/design-system.md",
+      ".claude/skills/design-review/SKILL.md"
+    ]
+  }
+}

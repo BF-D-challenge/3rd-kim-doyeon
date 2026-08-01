@@ -305,7 +305,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
     : "미정";
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background">
+    <main className="mx-auto min-h-dvh w-full max-w-md bg-background">
       {justCreated && (
         <div className="border-b bg-muted/50 px-5 py-4">
           <p className="mb-2 text-sm font-medium">완성! 이 문구를 카톡방에 붙여요</p>
@@ -337,7 +337,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
               <p className="truncate text-xs text-muted-foreground">
                 {event.description ?? "이름만 남기면 참석 완료"}
               </p>
-              <p className="mt-1 text-[10px] text-muted-foreground/70">
+              <p className="mt-1 text-xs text-muted-foreground/70">
                 {pageUrl.replace(/^https?:\/\//, "")}
               </p>
             </div>
@@ -449,7 +449,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
 
       {/* 확정된 모임: 캘린더 추가 (누구나) */}
       {isConfirmed && (
-        <section className="px-6 pt-5">
+        <section className="px-5 pt-5">
           <Button variant="outline" className="w-full gap-1.5" onClick={addToCalendar}>
             <CalendarPlus className="h-4 w-4" /> 캘린더에 추가
           </Button>
@@ -459,7 +459,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
       {/* RSVP */}
       <section
         className={cn(
-          "px-6",
+          "px-5",
           !(isHost && !isConfirmed && (isUndecided || isPoll)) && !isConfirmed && "-mt-6"
         )}
       >
@@ -583,7 +583,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
       </section>
 
       {/* 명단 (스노볼) */}
-      <section className="px-6 py-8">
+      <section className="px-5 py-8">
         <div className="mb-5 flex justify-around text-center">
           {(Object.keys(STATUS_META) as Status[]).map((s) => {
             const count = { going, maybe, no }[s].length;

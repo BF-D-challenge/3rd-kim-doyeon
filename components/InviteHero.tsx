@@ -160,7 +160,7 @@ export function InviteHero({
           <span className="inline-flex items-center gap-2">
             <CalendarDays className="h-4 w-4 opacity-80" /> {dateLabel}
             {dateConfirmed && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-black">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold text-black">
                 <CircleCheck className="h-3 w-3" /> 확정
               </span>
             )}

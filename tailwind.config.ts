@@ -13,10 +13,16 @@ const config: Config = {
       fontFamily: {
         sans: [
           "var(--font-sans)",
-          "Apple SD Gothic Neo",
+          "Pretendard Variable",
           "Pretendard",
+          "system-ui",
           "sans-serif",
         ],
+        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        // 디자인 시스템 최소 폰트 = 13px. text-xs 이하 금지 규칙을 토큰에서 강제
+        xs: ["0.8125rem", { lineHeight: "1.125rem" }], // 13px / 18px
       },
       borderRadius: {
         lg: "var(--radius)",

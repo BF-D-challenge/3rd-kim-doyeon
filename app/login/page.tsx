@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center bg-background px-6 py-16">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center bg-background px-5 py-16">
       <Link
         href="/"
         className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground"
@@ -45,7 +45,7 @@ export default function LoginPage() {
       {sent ? (
         <div className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent">
-            <Check className="h-7 w-7" />
+            <Check className="h-7 w-7" aria-hidden="true" />
           </div>
           <h1 className="mb-2 text-2xl font-bold tracking-tight">메일함을 확인해요</h1>
           <p className="leading-relaxed text-muted-foreground">

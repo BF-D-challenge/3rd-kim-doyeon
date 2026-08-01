@@ -47,7 +47,7 @@ export default function Home() {
   const hasEvents = events.length > 0;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background px-6 py-8">
+    <main className="mx-auto min-h-dvh w-full max-w-md bg-background px-5 py-8">
       {/* 상단 바 */}
       <div className="mb-8 flex items-center justify-between">
         <span className="text-sm font-semibold tracking-[0.15em] text-muted-foreground">
