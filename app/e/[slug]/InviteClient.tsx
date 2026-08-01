@@ -341,65 +341,89 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
       })
     : "미정";
 
-  return (
-    <main className="mx-auto min-h-dvh w-full max-w-md bg-background">
-      {justCreated && (
-        <div className="border-b bg-muted/40 px-5 pb-6 pt-8">
-          {/* 완성 = 주인공 순간 */}
-          <p className="text-[26px] font-extrabold leading-[1.35] tracking-tight">
-            완성됐어요! 🎉
-          </p>
-          <p className="mt-1 break-keep text-muted-foreground">
-            이제 친구들한테 보내면 끝이에요
-          </p>
+  // H2 — 완성·공유: 만든 직후엔 별도 화면 (초대장 본문과 분리)
+  if (justCreated) {
+    const shareButtons = [
+      { key: "kakao", label: "카톡", Icon: MessageCircle, onClick: copyMessage },
+      { key: "sms", label: "문자", Icon: MessageSquare, onClick: sendSms },
+      { key: "link", label: "링크 복사", Icon: Link2, onClick: copyLink },
+      { key: "more", label: "더보기", Icon: Share2, onClick: shareToFriends },
+    ];
+    return (
+      <main className="mx-auto min-h-dvh w-full max-w-md bg-background px-5 pb-10 pt-10">
+        <div className="text-center">
+          <h1 className="text-[28px] font-extrabold leading-[1.35] tracking-tight">완성됐어요!</h1>
+          <p className="mt-1 text-muted-foreground">이제 친구들한테 보내면 끝</p>
+        </div>
 
-          {/* 공유 대상별 (카톡·문자·링크·더보기) */}
-          <div className="mt-5 grid grid-cols-4 gap-2">
-            {[
-              { key: "kakao", label: "카톡", Icon: MessageCircle, onClick: copyMessage },
-              { key: "sms", label: "문자", Icon: MessageSquare, onClick: sendSms },
-              { key: "link", label: "링크 복사", Icon: Link2, onClick: copyLink },
-              { key: "more", label: "더보기", Icon: Share2, onClick: shareToFriends },
-            ].map(({ key, label, Icon, onClick }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={onClick}
-                className="flex flex-col items-center gap-1.5 rounded-2xl border bg-background py-3 text-sm transition active:scale-95"
-              >
-                <Icon className="h-5 w-5" strokeWidth={1.75} />
-                <span className="text-[13px]">{label}</span>
-              </button>
-            ))}
-          </div>
+        {/* 미리보기 — 게스트가 볼 초대장 그대로 */}
+        <div className="mt-6 overflow-hidden rounded-3xl border shadow-sm">
+          <InviteHero
+            theme={theme}
+            coverId={event.cover}
+            title={event.title}
+            description={event.description}
+            dateLabel={dateLabel}
+            placeLabel={event.place ?? "미정"}
+            stickers={(Array.isArray(event.stickers) ? event.stickers : []) as Sticker[]}
+            effect={normalizeEffect(event.effect)}
+            dateConfirmed={isConfirmed}
+            className="!min-h-[400px] rounded-3xl"
+          />
+        </div>
 
-          <Button onClick={copyMessage} className="mt-3 h-12 w-full gap-1.5">
-            {copiedMsg ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copiedMsg ? "복사됐어요 — 카톡에 붙여넣기" : "초대 문구 복사"}
-          </Button>
+        {/* 공유 대상별 */}
+        <p className="mb-3 mt-8 text-sm text-muted-foreground">어디로 보낼까요</p>
+        <div className="grid grid-cols-4 gap-2">
+          {shareButtons.map(({ key, label, Icon, onClick }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={onClick}
+              className="flex flex-col items-center gap-1.5 rounded-2xl border bg-background py-3.5 transition active:scale-95"
+            >
+              <Icon className="h-5 w-5" strokeWidth={1.75} />
+              <span className="text-[13px]">{label}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* OG 미리보기 (보조) */}
-          <p className="mb-1.5 mt-6 text-sm text-muted-foreground">카톡에 붙이면 이렇게 보여요</p>
-          <div className="max-w-[280px] overflow-hidden rounded-xl border bg-background">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/e/${event.slug}/opengraph-image`}
-              alt="카톡 미리보기 카드"
-              className="aspect-[1200/630] w-full object-cover"
-            />
-            <div className="px-3 py-2">
-              <p className="truncate text-sm font-medium">{event.title}</p>
-              <p className="truncate text-sm text-muted-foreground">
-                {event.description ?? "이름만 남기면 참석 완료"}
-              </p>
-              <p className="mt-1 truncate text-xs text-muted-foreground/70">
-                {pageUrl.replace(/^https?:\/\//, "")}
-              </p>
-            </div>
+        <Button onClick={copyMessage} className="mt-4 h-[52px] w-full gap-1.5 text-base">
+          {copiedMsg ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copiedMsg ? "복사됐어요 — 카톡에 붙여넣기" : "초대 문구 복사"}
+        </Button>
+
+        {/* OG 미리보기 (보조) */}
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/e/${event.slug}/opengraph-image`}
+            alt="카톡 미리보기 카드"
+            className="h-14 w-14 shrink-0 rounded-lg object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">카톡에 붙이면 이렇게 보여요</p>
+            <p className="truncate text-sm text-muted-foreground">
+              {event.title} · {pageUrl.replace(/^https?:\/\//, "")}
+            </p>
           </div>
         </div>
-      )}
 
+        {/* 초대장 보러가기 */}
+        <div className="mt-8 text-center">
+          <a
+            href={`/e/${event.slug}`}
+            className="text-sm text-muted-foreground underline underline-offset-2"
+          >
+            초대장 보기
+          </a>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto min-h-dvh w-full max-w-md bg-background">
       {/* 게스트 재방문: 날짜 확정 알림 배너 */}
       {isConfirmed && !isHost && hasResponded && (
         <div className="flex items-center gap-2 bg-primary px-5 py-3 text-primary-foreground">
