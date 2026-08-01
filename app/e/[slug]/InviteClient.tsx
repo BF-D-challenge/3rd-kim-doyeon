@@ -17,6 +17,9 @@ import {
   Users,
   Circle,
   CircleCheck,
+  MessageCircle,
+  MessageSquare,
+  Share2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { supabase, type EventRow, type RsvpRow } from "@/lib/supabase";
@@ -219,6 +222,23 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
     copyMessage();
   }
 
+  function sendSms() {
+    window.location.href = `sms:?&body=${encodeURIComponent(shareMessage)}`;
+  }
+
+  // 완성 직후: 축하 confetti 한 번
+  useEffect(() => {
+    if (!justCreated) return;
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.3 },
+      colors: theme.confetti,
+      disableForReducedMotion: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [justCreated]);
+
   const fetchRsvps = useCallback(async () => {
     const { data } = await supabase
       .from("rsvps")
@@ -324,25 +344,43 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-md bg-background">
       {justCreated && (
-        <div className="border-b bg-muted/50 px-5 py-4">
-          <p className="mb-2 text-sm font-medium">완성! 이 문구를 카톡방에 붙여요</p>
-          <div className="whitespace-pre-line rounded-lg border bg-background p-3 text-sm text-muted-foreground">
-            {shareMessage}
-          </div>
-          <div className="mt-2 flex gap-2">
-            <Button onClick={copyMessage} size="sm" className="flex-1 gap-1.5">
-              {copiedMsg ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copiedMsg ? "복사됨" : "초대 문구 복사"}
-            </Button>
-            <Button onClick={copyLink} size="sm" variant="outline" className="gap-1.5">
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
-              링크
-            </Button>
+        <div className="border-b bg-muted/40 px-5 pb-6 pt-8">
+          {/* 완성 = 주인공 순간 */}
+          <p className="text-[26px] font-extrabold leading-[1.35] tracking-tight">
+            완성됐어요! 🎉
+          </p>
+          <p className="mt-1 break-keep text-muted-foreground">
+            이제 친구들한테 보내면 끝이에요
+          </p>
+
+          {/* 공유 대상별 (카톡·문자·링크·더보기) */}
+          <div className="mt-5 grid grid-cols-4 gap-2">
+            {[
+              { key: "kakao", label: "카톡", Icon: MessageCircle, onClick: copyMessage },
+              { key: "sms", label: "문자", Icon: MessageSquare, onClick: sendSms },
+              { key: "link", label: "링크 복사", Icon: Link2, onClick: copyLink },
+              { key: "more", label: "더보기", Icon: Share2, onClick: shareToFriends },
+            ].map(({ key, label, Icon, onClick }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={onClick}
+                className="flex flex-col items-center gap-1.5 rounded-2xl border bg-background py-3 text-sm transition active:scale-95"
+              >
+                <Icon className="h-5 w-5" strokeWidth={1.75} />
+                <span className="text-[13px]">{label}</span>
+              </button>
+            ))}
           </div>
 
-          {/* 카톡 미리보기 (실제 OG 이미지) */}
-          <p className="mb-1.5 mt-4 text-xs text-muted-foreground">카톡에 붙이면 이렇게 보여요</p>
-          <div className="max-w-[260px] overflow-hidden rounded-xl border bg-background">
+          <Button onClick={copyMessage} className="mt-3 h-12 w-full gap-1.5">
+            {copiedMsg ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copiedMsg ? "복사됐어요 — 카톡에 붙여넣기" : "초대 문구 복사"}
+          </Button>
+
+          {/* OG 미리보기 (보조) */}
+          <p className="mb-1.5 mt-6 text-sm text-muted-foreground">카톡에 붙이면 이렇게 보여요</p>
+          <div className="max-w-[280px] overflow-hidden rounded-xl border bg-background">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/e/${event.slug}/opengraph-image`}
@@ -351,10 +389,10 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
             />
             <div className="px-3 py-2">
               <p className="truncate text-sm font-medium">{event.title}</p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-sm text-muted-foreground">
                 {event.description ?? "이름만 남기면 참석 완료"}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground/70">
+              <p className="mt-1 truncate text-xs text-muted-foreground/70">
                 {pageUrl.replace(/^https?:\/\//, "")}
               </p>
             </div>
