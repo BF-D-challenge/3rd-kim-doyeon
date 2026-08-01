@@ -701,6 +701,21 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
           </div>
         )}
 
+        {event.host_name && (
+          <div className="mb-6">
+            <p className="mb-3 text-sm text-muted-foreground">호스트</p>
+            <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 p-3.5">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                style={{ backgroundColor: `${theme.accent}26`, color: theme.accent }}
+              >
+                {event.host_name.trim().charAt(0)}
+              </span>
+              <p className="font-semibold">{event.host_name}</p>
+            </div>
+          </div>
+        )}
+
         <NameList meta={STATUS_META.going} people={going} accent={theme.accent} highlight />
         <NameList meta={STATUS_META.maybe} people={maybe} accent={theme.accent} />
         <NameList meta={STATUS_META.no} people={no} accent={theme.accent} />

@@ -56,6 +56,7 @@ export default function CreatePage() {
   const [coverId, setCoverId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [hostName, setHostName] = useState("");
   const [dateMode, setDateMode] = useState<"unset" | "fixed" | "poll">("unset");
   const [startsAt, setStartsAt] = useState("");
   const [dateOptions, setDateOptions] = useState<string[]>([]);
@@ -184,25 +185,33 @@ export default function CreatePage() {
     setLoading(true);
     const slug = randomSlug();
     const hostToken = crypto.randomUUID();
-    const { data, error: dbError } = await supabase
-      .from("events")
-      .insert({
-        slug,
-        title: title.trim(),
-        theme: themeKey,
-        starts_at: dateMode === "fixed" && startsAt ? new Date(startsAt).toISOString() : null,
-        date_options:
-          dateMode === "poll" ? dateOptions.map((o) => new Date(o).toISOString()) : [],
-        place: placeUndecided || !place.trim() ? null : place.trim(),
-        description: description.trim() || null,
-        cover: coverId,
-        stickers,
-        effect,
-        host_token: hostToken,
-        host_user_id: user?.id ?? null,
-      })
-      .select("id")
-      .single();
+    const payload: Record<string, unknown> = {
+      slug,
+      title: title.trim(),
+      theme: themeKey,
+      starts_at: dateMode === "fixed" && startsAt ? new Date(startsAt).toISOString() : null,
+      date_options: dateMode === "poll" ? dateOptions.map((o) => new Date(o).toISOString()) : [],
+      place: placeUndecided || !place.trim() ? null : place.trim(),
+      description: description.trim() || null,
+      cover: coverId,
+      stickers,
+      effect,
+      host_token: hostToken,
+      host_user_id: user?.id ?? null,
+      host_name: hostName.trim() || null,
+    };
+    // host_name 컬럼이 아직 없는 DB(마이그레이션 전)면 빼고 재시도 → 생성은 무조건 성공
+    async function insertEvent(body: Record<string, unknown>) {
+      return supabase.from("events").insert(body).select("id").single();
+    }
+    const isSchemaErr = (e: { code?: string; message?: string } | null) =>
+      !!e && (e.code === "PGRST204" || e.code === "42703" || /host_name/i.test(e.message ?? ""));
+    let { data, error: dbError } = await insertEvent(payload);
+    if (dbError && isSchemaErr(dbError)) {
+      const rest = { ...payload };
+      delete rest.host_name;
+      ({ data, error: dbError } = await insertEvent(rest));
+    }
     setLoading(false);
     if (dbError) {
       setError("저장 실패: " + dbError.message);
@@ -460,6 +469,16 @@ export default function CreatePage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="집들이 핑계로 얼굴 좀 보자~"
               />
+            </div>
+            <div>
+              <Label htmlFor="host" className="mb-2 block">주최자 이름</Label>
+              <Input
+                id="host"
+                value={hostName}
+                onChange={(e) => setHostName(e.target.value)}
+                placeholder="도연"
+              />
+              <p className="mt-1.5 text-sm text-muted-foreground">명단 맨 위에 호스트로 표시돼요</p>
             </div>
             <div>
               <Label className="mb-2 block">날짜 / 시간</Label>

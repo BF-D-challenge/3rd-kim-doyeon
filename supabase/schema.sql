@@ -79,3 +79,9 @@ create policy "events_update" on public.events for update using (true) with chec
 
 -- [마이그레이션 2026-07-26] 호스트 계정 연결 (이메일 매직링크)
 alter table public.events add column if not exists host_user_id uuid;
+
+-- [마이그레이션 2026-07-27] 주최자 표시 이름 (명단 호스트 섹션)
+alter table public.events add column if not exists host_name text;
+-- 데모 이벤트에 호스트 이름 채우기 (호스트 섹션 시연용)
+update public.events set host_name = '도연'
+  where slug in ('demo-house', 'demo-jeju') and host_name is null;
