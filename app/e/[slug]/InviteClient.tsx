@@ -62,6 +62,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
   const [comment, setComment] = useState("");
   const [votes, setVotes] = useState<string[]>([]);
   const [myStatus, setMyStatus] = useState<Status | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<Status | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -268,6 +269,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
     }
 
     setMyStatus(status);
+    setPendingStatus(null);
     setDone(true);
     fetchRsvps();
 
@@ -456,33 +458,26 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
         </section>
       )}
 
-      {/* RSVP */}
-      <section
-        className={cn(
-          "px-5",
-          !(isHost && !isConfirmed && (isUndecided || isPoll)) && !isConfirmed && "-mt-6"
-        )}
-      >
-        <Card className="relative z-10 rounded-3xl p-6 shadow-xl">
+      {/* RSVP — 커버를 덮지 않고 아래에 (히어로/폼 분리) · 테두리 없이 미니멀 */}
+      <section className="px-5 pt-6">
+        <Card className="rounded-none border-0 bg-transparent p-0 shadow-none">
           {!done ? (
             <>
-              <p className="mb-4 text-center font-medium">
-                {isPoll ? "되는 날짜 골라줘요" : "올 거예요? 이름만 남겨줘요"}
-              </p>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="이름"
-                className="mb-2 h-12 text-center text-base"
-              />
-              <Input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="한마디 (선택) — 모두에게 보여요"
-                className="mb-4 h-11 text-center text-sm"
-              />
               {isPoll ? (
                 <>
+                  <p className="mb-4 text-center font-medium">되는 날짜 골라줘요</p>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="이름"
+                    className="mb-2 h-12 text-center text-base"
+                  />
+                  <Input
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="한마디 (선택) — 모두에게 보여요"
+                    className="mb-4 h-11 text-center text-sm"
+                  />
                   <div className="mb-4 space-y-2">
                     {dateOptions.map((o) => {
                       const on = votes.includes(o);
@@ -527,36 +522,114 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
                     )}
                   </Button>
                 </>
+              ) : !pendingStatus ? (
+                // 리액션 먼저 (이름은 그다음) · 소셜 증거를 CTA 위에 · 갈게 강조
+                <>
+                  {going.length > 0 ? (
+                    <div className="mb-4 flex flex-col items-center gap-2">
+                      <div className="flex -space-x-2">
+                        {going.slice(0, 4).map((p) => (
+                          <span
+                            key={p.id}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card text-xs font-semibold"
+                            style={{ backgroundColor: `${theme.accent}26`, color: theme.accent }}
+                          >
+                            {p.guest_name.trim().charAt(0)}
+                          </span>
+                        ))}
+                        {going.length > 4 && (
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-muted text-xs font-semibold text-muted-foreground">
+                            +{going.length - 4}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm">
+                        <span className="font-semibold">{going[0].guest_name}</span>
+                        {going.length > 1 ? ` 외 ${going.length - 1}명` : ""}이 온대요
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mb-4 text-center font-medium">올 거예요?</p>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["no", "maybe", "going"] as Status[]).map((s) => {
+                      const { label, Icon } = STATUS_META[s];
+                      const primary = s === "going";
+                      return (
+                        <Button
+                          key={s}
+                          type="button"
+                          variant={primary ? "default" : "outline"}
+                          onClick={() => {
+                            setRsvpError(null);
+                            setPendingStatus(s);
+                          }}
+                          className="flex h-auto flex-col gap-1.5 py-3.5 transition-transform active:scale-95"
+                        >
+                          <Icon
+                            className="h-5 w-5"
+                            strokeWidth={1.75}
+                            style={primary ? undefined : { color: theme.accent }}
+                          />
+                          <span className="text-sm">{label}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    탭 한 번이면 끝 · 이름은 그다음에 물어봐요
+                  </p>
+                </>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
-                  {(Object.keys(STATUS_META) as Status[]).map((s) => {
-                    const { label, Icon } = STATUS_META[s];
-                    return (
-                      <Button
-                        key={s}
-                        type="button"
-                        variant="outline"
-                        disabled={!name.trim() || submitting}
-                        onClick={() => submit(s)}
-                        className="flex h-auto flex-col gap-1.5 py-3.5 transition-transform active:scale-95"
-                      >
-                        <Icon
-                          className="h-5 w-5"
-                          strokeWidth={1.75}
-                          style={{ color: theme.accent }}
-                        />
-                        <span className="text-xs">{label}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
+                // 리액션 선택 후 — 이름(+한마디)
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setPendingStatus(null)}
+                    className="mb-2 text-sm text-muted-foreground underline underline-offset-2"
+                  >
+                    ← 다시 고르기
+                  </button>
+                  <p className="mb-4 text-center font-medium">
+                    <span style={{ color: theme.accent }}>
+                      {STATUS_META[pendingStatus].label}
+                    </span>{" "}
+                    · 이름만 남겨줘요
+                  </p>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="이름"
+                    autoFocus
+                    className="mb-2 h-12 text-center text-base"
+                  />
+                  <Input
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="한마디 (선택) — 모두에게 보여요"
+                    className="mb-4 h-11 text-center text-sm"
+                  />
+                  <Button
+                    className="h-12 w-full"
+                    disabled={!name.trim() || submitting}
+                    onClick={() => submit(pendingStatus)}
+                  >
+                    {submitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "이름 남기고 완료"
+                    )}
+                  </Button>
+                </>
               )}
               {rsvpError && (
                 <p className="mt-3 text-center text-sm text-destructive">{rsvpError}</p>
               )}
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                가입·전화번호 없이 이름만 · 명단은 서로 볼 수 있어요
-              </p>
+              {isPoll && (
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  가입·전화번호 없이 이름만 · 명단은 서로 볼 수 있어요
+                </p>
+              )}
             </>
           ) : (
             <div className="py-2 text-center">
@@ -572,7 +645,10 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
                   : `${name}님 ${myStatus ? STATUS_META[myStatus].label : ""}!`}
               </p>
               <button
-                onClick={() => setDone(false)}
+                onClick={() => {
+                  setPendingStatus(myStatus);
+                  setDone(false);
+                }}
                 className="text-sm text-muted-foreground underline underline-offset-2"
               >
                 응답 바꾸기
@@ -584,20 +660,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
 
       {/* 명단 (스노볼) */}
       <section className="px-5 py-8">
-        <div className="mb-5 flex justify-around text-center">
-          {(Object.keys(STATUS_META) as Status[]).map((s) => {
-            const count = { going, maybe, no }[s].length;
-            const { label, Icon } = STATUS_META[s];
-            return (
-              <div key={s}>
-                <div className="text-2xl font-bold">{count}</div>
-                <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <Icon className="h-3.5 w-3.5" /> {label}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* 명단 = 이름 + 한마디 (집계 카운터는 PRD Non-goal · 소셜 증거는 RSVP 카드로 이동) */}
 
         <NameList meta={STATUS_META.going} people={going} highlight />
         <NameList meta={STATUS_META.maybe} people={maybe} />

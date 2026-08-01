@@ -48,7 +48,6 @@ export function InviteHero({
   const canvasRef = useRef<HTMLElement>(null);
   const isImageCover = Boolean(coverId && coverId.startsWith("http"));
   const cover = isImageCover ? null : getCover(coverId);
-  const HeroIcon = theme.Icon;
 
   function startDrag(e: React.PointerEvent, uid: string) {
     if (!editable || !canvasRef.current) return;
@@ -76,7 +75,8 @@ export function InviteHero({
       ref={canvasRef}
       onPointerDown={editable ? () => onSelect?.(null) : undefined}
       className={cn(
-        "relative overflow-hidden px-6 pb-14 pt-14 text-center text-white",
+        // 커버가 화면 상단을 크게 차지 + 제목은 하단 좌측 (폼이 커버를 덮지 않음)
+        "relative flex min-h-[56vh] flex-col justify-end overflow-hidden px-6 pb-8 pt-16 text-left text-white",
         !isImageCover && "bg-gradient-to-br",
         !isImageCover && (cover ? cover.tw : theme.gradient),
         editable && "select-none touch-none",
@@ -90,6 +90,11 @@ export function InviteHero({
     >
       {/* 이미지 커버일 때 가독성용 딤 */}
       {isImageCover && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
+      {/* 하단 스크림 — 커버 위 제목 가독성 확보 */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[6] h-2/3 bg-gradient-to-t from-black/45 via-black/10 to-transparent"
+        aria-hidden="true"
+      />
       <EffectLayer
         type={effect}
         icons={theme.particles}
@@ -147,16 +152,13 @@ export function InviteHero({
         })}
       </div>
 
-      {/* 본문 */}
+      {/* 본문 — 커버 하단 좌측 */}
       <div className={cn("relative", editable ? "pointer-events-none z-10" : "z-10")}>
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-          <HeroIcon className="h-8 w-8" strokeWidth={1.75} />
-        </div>
-        <h1 className="mb-3 text-3xl font-extrabold tracking-tight drop-shadow-sm">
+        <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-md">
           {title || "제목을 입력해줘요"}
         </h1>
-        {description && <p className="mb-6 text-lg text-white/90">{description}</p>}
-        <div className="inline-flex flex-col gap-1.5 rounded-2xl bg-black/20 px-5 py-3 text-sm backdrop-blur">
+        {description && <p className="mt-2 text-lg text-white/90 drop-shadow">{description}</p>}
+        <div className="mt-4 inline-flex flex-col gap-1.5 rounded-2xl bg-black/25 px-4 py-3 text-sm backdrop-blur">
           <span className="inline-flex items-center gap-2">
             <CalendarDays className="h-4 w-4 opacity-80" /> {dateLabel}
             {dateConfirmed && (
