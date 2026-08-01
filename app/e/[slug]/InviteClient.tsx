@@ -736,7 +736,7 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
       </section>
 
       {/* 명단 (G2) = 분위기 헤더 + 카드 리스트 + 바이럴 루프 CTA */}
-      <section className="px-5 py-8">
+      <section id="guestlist" className="px-5 py-8">
         {/* 분위기 먼저 — 겹친 아바타 + 대표 한마디 + N명 (Apple Invites Guest List 헤더) */}
         {going.length > 0 && (
           <div className="mb-6 rounded-2xl bg-muted/60 p-5 text-center">
@@ -802,6 +802,40 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
       <footer className="pb-10 text-center text-xs text-muted-foreground/70">
         made with 모디 · 초대가 곧 기대감이 되는 앱
       </footer>
+
+      {/* H3 — 호스트 재방문: 초대장 위에 얹는 액션 바 (대시보드 아님, host_token 분기) */}
+      {isHost && (
+        <nav className="sticky bottom-0 z-20 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+          <div className="mx-auto flex max-w-md items-stretch gap-2 px-4 py-2.5">
+            <button
+              type="button"
+              onClick={copyMessage}
+              className="flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-muted-foreground transition active:scale-95"
+            >
+              {copiedMsg ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+              <span className="text-[13px]">문구 복사</span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById("guestlist")?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="flex flex-[1.4] flex-col items-center gap-1 rounded-xl bg-primary py-2 text-primary-foreground transition active:scale-95"
+            >
+              <PartyPopper className="h-5 w-5" />
+              <span className="text-[13px] font-semibold">{going.length}명 온대요</span>
+            </button>
+            <button
+              type="button"
+              onClick={shareToFriends}
+              className="flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-muted-foreground transition active:scale-95"
+            >
+              <Share2 className="h-5 w-5" />
+              <span className="text-[13px]">공유</span>
+            </button>
+          </div>
+        </nav>
+      )}
     </main>
   );
 }
