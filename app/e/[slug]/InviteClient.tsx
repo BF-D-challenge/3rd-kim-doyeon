@@ -206,6 +206,19 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
     }
   }
 
+  async function shareToFriends() {
+    const url = window.location.href.split("?")[0];
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: event.title, text: shareMessage, url });
+        return;
+      } catch {
+        /* 취소/미지원 → 복사 폴백 */
+      }
+    }
+    copyMessage();
+  }
+
   const fetchRsvps = useCallback(async () => {
     const { data } = await supabase
       .from("rsvps")
@@ -295,6 +308,8 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
   const going = rsvps.filter((r) => r.status === "going");
   const maybe = rsvps.filter((r) => r.status === "maybe");
   const no = rsvps.filter((r) => r.status === "no");
+  // 가장 최근 한마디 (명단 '분위기' 헤더용)
+  const latestComment = [...rsvps].reverse().find((r) => r.comment && r.comment.trim());
 
   const dateLabel = event.starts_at
     ? new Date(event.starts_at).toLocaleString("ko-KR", {
@@ -658,19 +673,53 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
         </Card>
       </section>
 
-      {/* 명단 (스노볼) */}
+      {/* 명단 (G2) = 분위기 헤더 + 카드 리스트 + 바이럴 루프 CTA */}
       <section className="px-5 py-8">
-        {/* 명단 = 이름 + 한마디 (집계 카운터는 PRD Non-goal · 소셜 증거는 RSVP 카드로 이동) */}
+        {/* 분위기 먼저 — 겹친 아바타 + 대표 한마디 + N명 (Apple Invites Guest List 헤더) */}
+        {going.length > 0 && (
+          <div className="mb-6 rounded-2xl bg-muted/60 p-5 text-center">
+            <div className="mb-3 flex justify-center -space-x-2">
+              {going.slice(0, 5).map((p) => (
+                <span
+                  key={p.id}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-background text-sm font-semibold"
+                  style={{ backgroundColor: `${theme.accent}26`, color: theme.accent }}
+                >
+                  {p.guest_name.trim().charAt(0)}
+                </span>
+              ))}
+            </div>
+            {latestComment && (
+              <>
+                <p className="break-keep text-lg font-bold">
+                  &ldquo;{latestComment.comment}&rdquo;
+                </p>
+                <p className="text-sm text-muted-foreground">{latestComment.guest_name}</p>
+              </>
+            )}
+            <p className="mt-2 font-medium">{going.length}명이 온대요</p>
+          </div>
+        )}
 
-        <NameList meta={STATUS_META.going} people={going} highlight />
-        <NameList meta={STATUS_META.maybe} people={maybe} />
-        <NameList meta={STATUS_META.no} people={no} />
+        <NameList meta={STATUS_META.going} people={going} accent={theme.accent} highlight />
+        <NameList meta={STATUS_META.maybe} people={maybe} accent={theme.accent} />
+        <NameList meta={STATUS_META.no} people={no} accent={theme.accent} />
 
         {rsvps.length === 0 && (
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mb-6 text-center text-sm text-muted-foreground">
             아직 아무도 없어요. 첫 번째로 남겨봐요!
           </p>
         )}
+
+        {/* 바이럴 루프 — 공유 + 나도 만들기 (한마디가 쌓일수록 재공유 ↑) */}
+        <div className="grid grid-cols-2 gap-2 border-t pt-6">
+          <Button variant="outline" className="h-12" onClick={shareToFriends}>
+            친구한테 공유
+          </Button>
+          <Button asChild className="h-12">
+            <a href="/create">나도 만들어보기</a>
+          </Button>
+        </div>
       </section>
 
       <footer className="pb-10 text-center text-xs text-muted-foreground/70">
@@ -683,33 +732,53 @@ export default function InviteClient({ event: initialEvent }: { event: EventRow 
 function NameList({
   meta,
   people,
+  accent,
   highlight,
+  limit = 4,
 }: {
   meta: { label: string; Icon: LucideIcon };
   people: RsvpRow[];
+  accent: string;
   highlight?: boolean;
+  limit?: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
   if (people.length === 0) return null;
   const { label, Icon } = meta;
+  const shown = expanded ? people : people.slice(0, limit);
+  const hidden = people.length - shown.length;
   return (
-    <div className="mb-5">
-      <p className="mb-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Icon className="h-4 w-4" /> {label}
+    <div className="mb-6">
+      <p className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Icon className="h-4 w-4" /> {label} ({people.length})
       </p>
-      <div className="divide-y">
-        {people.map((p) => (
-          <div key={p.id} className="flex items-baseline gap-2 py-2.5">
-            <span className={highlight ? "text-sm font-semibold" : "text-sm font-medium"}>
-              {p.guest_name}
+      <div className="space-y-2.5">
+        {shown.map((p) => (
+          <div key={p.id} className="flex items-center gap-3 rounded-2xl border p-3.5">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+              style={{ backgroundColor: `${accent}26`, color: accent }}
+            >
+              {p.guest_name.trim().charAt(0)}
             </span>
-            {p.comment && (
-              <span className="truncate text-xs italic text-muted-foreground">
-                &ldquo;{p.comment}&rdquo;
-              </span>
-            )}
+            <div className="min-w-0 flex-1">
+              <p className={highlight ? "font-semibold" : "font-medium"}>{p.guest_name}</p>
+              {p.comment && (
+                <p className="mt-0.5 break-keep text-sm text-muted-foreground">{p.comment}</p>
+              )}
+            </div>
           </div>
         ))}
       </div>
+      {hidden > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="mt-2.5 text-sm text-muted-foreground underline underline-offset-2"
+        >
+          +{hidden}명 더 보기
+        </button>
+      )}
     </div>
   );
 }
